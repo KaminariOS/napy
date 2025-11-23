@@ -12,6 +12,15 @@ wheels = [
 ]
 
 [[package]]
+name = "ansi2html"
+version = "1.9.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/4b/d5/e3546dcd5e4a9566f4ed8708df5853e83ca627461a5b048a861c6f8e7a26/ansi2html-1.9.2.tar.gz", hash = "sha256:3453bf87535d37b827b05245faaa756dbab4ec3d69925e352b6319c3c955c0a5", size = 44300, upload-time = "2024-06-22T17:33:23.964Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bd/71/aee71b836e9ee2741d5694b80d74bfc7c8cd5dbdf7a9f3035fcf80d792b1/ansi2html-1.9.2-py3-none-any.whl", hash = "sha256:dccb75aa95fb018e5d299be2b45f802952377abfdce0504c17a6ee6ef0a420c5", size = 17614, upload-time = "2024-06-22T17:33:21.852Z" },
+]
+
+[[package]]
 name = "anyio"
 version = "4.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -86,6 +95,25 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/17/47/72cb04a58a35ec495f96984dddb48232b551aafb95bde614605b754fe6f7/lockfile-0.12.2.tar.gz", hash = "sha256:6aed02de03cba24efabcd600b30540140634fc06cfa603822d508d5361e9f799", size = 20874, upload-time = "2015-11-25T18:29:58.279Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/22/9460e311f340cb62d26a38c419b1381b8593b0bb6b5d1f056938b086d362/lockfile-0.12.2-py2.py3-none-any.whl", hash = "sha256:6c3cb24f344923d30b2785d5ad75182c8ea7ac1b6171b08657258ec7429d50fa", size = 13564, upload-time = "2015-11-25T18:29:51.462Z" },
+]
+
+[[package]]
+name = "napy"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "ansi2html" },
+    { name = "pydantic-settings" },
+    { name = "python-daemon" },
+    { name = "python-telegram-bot" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "ansi2html", specifier = ">=1.9.2" },
+    { name = "pydantic-settings", specifier = ">=2.12.0" },
+    { name = "python-daemon", specifier = ">=3.0.1" },
+    { name = "python-telegram-bot", specifier = ">=21.0" },
 ]
 
 [[package]]
@@ -201,23 +229,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/0b/6b/400f88e5c29a270c1c519a3ca8ad0babc650ec63dbfbd1b73babf625ed54/python_telegram_bot-22.5.tar.gz", hash = "sha256:82d4efd891d04132f308f0369f5b5929e0b96957901f58bcef43911c5f6f92f8", size = 1488269, upload-time = "2025-09-27T13:50:27.879Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bc/c3/340c7520095a8c79455fcf699cbb207225e5b36490d2b9ee557c16a7b21b/python_telegram_bot-22.5-py3-none-any.whl", hash = "sha256:4b7cd365344a7dce54312cc4520d7fa898b44d1a0e5f8c74b5bd9b540d035d16", size = 730976, upload-time = "2025-09-27T13:50:25.93Z" },
-]
-
-[[package]]
-name = "napy"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "pydantic-settings" },
-    { name = "python-daemon" },
-    { name = "python-telegram-bot" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pydantic-settings", specifier = ">=2.12.0" },
-    { name = "python-daemon", specifier = ">=3.0.1" },
-    { name = "python-telegram-bot", specifier = ">=21.0" },
 ]
 
 [[package]]

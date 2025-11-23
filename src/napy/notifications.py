@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+from ansi2html import Ansi2HTMLConverter
 from telegram import Bot
 from telegram.error import TelegramError
 
@@ -83,16 +84,19 @@ def _escape_html(text: str) -> str:
 
 
 def _format_output_html(text: str) -> str:
-    """Format command output as HTML with proper line breaks and whitespace."""
+    """Format command output as HTML with ANSI codes converted to HTML."""
     if not text:
         return '<span class="empty-output">(empty)</span>'
     
-    # Strip ANSI codes and escape HTML
-    cleaned = _strip_ansi_codes(text)
-    escaped = _escape_html(cleaned)
+    # Convert ANSI codes to HTML using ansi2html
+    # inline=True uses inline styles, full=False returns just the body content
+    conv = Ansi2HTMLConverter(inline=True, dark_bg=False)
+    html_output = conv.convert(text, full=False)
     
-    # Return escaped text (will be wrapped in output-box div in the template)
-    return escaped
+    # ansi2html may wrap content in <pre> or <span> tags
+    # We want to ensure it's properly formatted for our output-box div
+    # The output should already be properly escaped by ansi2html
+    return html_output
 
 
 async def send_telegram_message(
