@@ -1,5 +1,5 @@
 [project]
-name = "python-uvx-example"
+name = "napy"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-python-uvx-example = "python_uvx_example:main_entry_point"
+napy = "napy:main_entry_point"
 
 [build-system]
 requires = ["hatchling"]
