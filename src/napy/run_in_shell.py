@@ -42,8 +42,6 @@ def _execute_command_direct(cfg: AppConfig, command: str, shell: str) -> None:
 def _execute_command(cfg: AppConfig, command: str, shell: str) -> None:
     """Execute the command and handle logging/notifications."""
     import subprocess
-    import threading
-    from io import StringIO
     
     start_time = datetime.now()
     exit_code = None
@@ -51,45 +49,18 @@ def _execute_command(cfg: AppConfig, command: str, shell: str) -> None:
     stderr_output = ""
     
     try:
-        # Capture output while mirroring to the real stdout/stderr to preserve
-        # live feedback and ANSI escape sequences.
-        stdout_capture = StringIO()
-        stderr_capture = StringIO()
-
-        def _reader(pipe, original_stream, capture_buffer):
-            for chunk in iter(pipe.readline, ""):
-                original_stream.write(chunk)
-                original_stream.flush()
-                capture_buffer.write(chunk)
-            pipe.close()
-
-        # Use Popen with pipes because subprocess.run expects file-like objects
-        # with a real file descriptor; our tee approach is implemented manually.
-        process = subprocess.Popen(
+        # Run command quietly but keep captured output for logging/notifications.
+        result = subprocess.run(
             [shell, "-c", command],
             stdin=sys.stdin,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            cwd=os.getcwd(),
+            capture_output=True,
             text=True,
-            bufsize=1,  # line-buffered
+            cwd=os.getcwd(),
         )
 
-        # Fan out stdout/stderr to both console and capture buffers.
-        threads = [
-            threading.Thread(target=_reader, args=(process.stdout, sys.stdout, stdout_capture)),
-            threading.Thread(target=_reader, args=(process.stderr, sys.stderr, stderr_capture)),
-        ]
-        for t in threads:
-            t.daemon = True
-            t.start()
-
-        exit_code = process.wait()
-        for t in threads:
-            t.join()
-
-        stdout_output = stdout_capture.getvalue()
-        stderr_output = stderr_capture.getvalue()
+        exit_code = result.returncode
+        stdout_output = result.stdout or ""
+        stderr_output = result.stderr or ""
     except Exception as e:
         error_msg = f"Failed to execute command: {e}"
         stderr_output = error_msg
