@@ -62,14 +62,6 @@ def _execute_command(cfg: AppConfig, command: str, shell: str) -> None:
         exit_code = result.returncode
         stdout_output = result.stdout or ""
         stderr_output = result.stderr or ""
-        
-        # Also display output to user
-        if stdout_output:
-            sys.stdout.write(stdout_output)
-            sys.stdout.flush()
-        if stderr_output:
-            sys.stderr.write(stderr_output)
-            sys.stderr.flush()
     except Exception as e:
         error_msg = f"Failed to execute command: {e}"
         stderr_output = error_msg
