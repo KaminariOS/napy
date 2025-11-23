@@ -20,6 +20,9 @@ uv tool install .
 
 # or run without installing
 uv run napy --help
+
+# try straight from GitHub with `uvx`
+uvx --from git+http://github.com/KaminariOS/napy napy ls
 ```
 
 ## Configure
