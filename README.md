@@ -12,7 +12,7 @@
 
 ## Install
 
-Requirements: Python 3.13+ and [`uv`](https://docs.astral.sh/uv/) (for isolated installs).
+Requirements: [`uv`](https://docs.astral.sh/uv/) (for isolated installs).
 
 ```sh
 # from the repo root
