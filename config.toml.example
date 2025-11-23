@@ -2,3 +2,16 @@
 username = "world"
 retries = 3
 enable_notifications = false
+# shell = ""  # Shell to use (defaults to $SHELL or /bin/sh)
+
+[telegram]
+# api_key = ""  # Telegram bot API key
+# chat_id = ""  # Telegram chat ID to send messages to
+
+[email]
+# smtp_host = ""
+# smtp_port = 465
+# smtp_user = ""
+# smtp_pass = ""  # required secret
+# sender = ""      # required when sending email
+# recipient = ""   # required when sending email

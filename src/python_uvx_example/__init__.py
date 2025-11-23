@@ -1,49 +1,24 @@
 from __future__ import annotations
 
 import os
+import sys
 import tomllib
 from pathlib import Path
 
-import typer
-from pydantic import BaseModel, ValidationError, Field
+from pydantic import ValidationError
 
-app = typer.Typer()
-
-
-class TelegramConfig(BaseModel):
-    api_key: str | None = Field(default=None, description="Telegram bot API key")
-
-
-class EmailConfig(BaseModel):
-    smtp_host: str | None = Field(default=None, description="SMTP host")
-    smtp_port: int | None = Field(default=None, description="SMTP port")
-    smtp_user: str | None = Field(default=None, description="SMTP user")
-    smtp_pass: str | None = Field(default=None, description="SMTP password / secret")
-    sender: str | None = Field(default=None, description="From address")
-    recipient: str | None = Field(default=None, description="To address")
-
-
-class AppConfig(BaseModel):
-    username: str = Field(
-        default="world",
-        description="Name used in greetings and other user-facing messages.",
-    )
-    retries: int = Field(default=3, ge=0, le=10, description="Number of retry attempts.")
-    enable_notifications: bool = Field(default=False, description="Toggle notifications.")
-    telegram: TelegramConfig = Field(default_factory=TelegramConfig)
-    email: EmailConfig = Field(default_factory=EmailConfig)
+from .config import AppConfig
+from .run_in_shell import _execute_command_direct
 
 
 def _config_path() -> Path:
     """Return the expected config file path: $XDG_CONFIG_HOME/napy/config.toml."""
-
     config_root = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
     return config_root / "napy" / "config.toml"
 
 
 def _write_default_config(path: Path) -> None:
     """Write a minimal default config file to `path` with placeholders."""
-
     cfg = AppConfig()  # relies on defaults
     path.parent.mkdir(parents=True, exist_ok=True)
     toml_content = (
@@ -51,9 +26,11 @@ def _write_default_config(path: Path) -> None:
         "# Update values as needed. Secrets such as smtp_pass are intentionally empty.\n"
         f'username = "{cfg.username}"\n'
         f"retries = {cfg.retries}\n"
-        f"enable_notifications = {str(cfg.enable_notifications).lower()}\n\n"
+        f"enable_notifications = {str(cfg.enable_notifications).lower()}\n"
+        "# shell = ""  # Shell to use (defaults to $SHELL or /bin/sh)\n\n"
         "[telegram]\n"
-        "# api_key = ""  # Telegram bot API key\n\n"
+        "# api_key = ""  # Telegram bot API key\n"
+        "# chat_id = ""  # Telegram chat ID to send messages to\n\n"
         "[email]\n"
         "# smtp_host = ""\n"
         "# smtp_port = 465\n"
@@ -67,44 +44,49 @@ def _write_default_config(path: Path) -> None:
 
 def load_config() -> AppConfig:
     """Load and validate the config file, creating it with defaults if missing."""
-
     path = _config_path()
     if not path.exists():
         _write_default_config(path)
-        typer.echo(f"Created default config at {path}. Update it and rerun.")
-        raise typer.Exit(code=0)
+        print(f"Created default config at {path}. Update it and rerun.", file=sys.stderr)
+        sys.exit(0)
 
     try:
         content = path.read_text()
         data = tomllib.loads(content)
-    except Exception as exc:  # broad to catch parse and IO errors
-        typer.echo(f"Failed to read config file at {path}: {exc}")
-        raise typer.Exit(code=1)
+    except Exception as exc:
+        print(f"Failed to read config file at {path}: {exc}", file=sys.stderr)
+        sys.exit(1)
 
     try:
         return AppConfig(**data)
     except ValidationError as err:
-        typer.echo("Config validation failed:")
-        typer.echo(err)
-        raise typer.Exit(code=1)
+        print("Config validation failed:", file=sys.stderr)
+        print(err, file=sys.stderr)
+        sys.exit(1)
 
 
-@app.callback(invoke_without_command=True)
-def main(ctx: typer.Context):
-    """Ensure config is present/valid before running any command."""
-
-    cfg = load_config()
-    ctx.obj = cfg
-
-    # If no subcommand was provided, give a short success message and exit.
-    if ctx.invoked_subcommand is None:
-        typer.echo("Configuration loaded successfully. Use a command (e.g. hello).")
-
-
-@app.command()
-def hello(ctx: typer.Context, name: str | None = None):
-    """Say hello using config defaults unless a name is provided."""
-
-    cfg: AppConfig = ctx.obj
-    target = name or cfg.username
-    typer.echo(f"👋 Hello, {target}!")
+def main_entry_point():
+    """Main entry point - runs the input as a Linux command, like the Rust code."""
+    args = sys.argv[1:]
+    
+    if not args:
+        print("Usage: python-uvx-example <command>", file=sys.stderr)
+        sys.exit(1)
+    
+    # Join all arguments into a single command string (like the Rust version)
+    cmd = " ".join(args)
+    
+    # Load config
+    try:
+        cfg = load_config()
+    except SystemExit:
+        raise
+    except Exception as e:
+        print(f"Failed to load config: {e}", file=sys.stderr)
+        sys.exit(1)
+    
+    # Determine shell to use
+    shell = cfg.shell or os.environ.get("SHELL", "/bin/sh")
+    
+    # Execute the command (daemonizes, logs to DB, sends notifications)
+    _execute_command_direct(cfg, cmd, shell)
