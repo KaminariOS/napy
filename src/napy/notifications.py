@@ -50,7 +50,7 @@ def _strip_ansi_codes(text: str) -> str:
     """Remove ANSI escape codes from text."""
     # Remove ANSI escape sequences including:
     # - ESC [ ... m (SGR - Select Graphic Rendition)
-    # - ESC ] ... (OSC - Operating System Command)
+    # - ESC ] ... BEL or ESC \ (OSC - Operating System Command)
     # - ESC [ ... q (cursor styles)
     # - ESC [ ... ; ... H (cursor position)
     # - ESC [ ... K (erase in line)
@@ -62,14 +62,25 @@ def _strip_ansi_codes(text: str) -> str:
     # - ESC [ ... r (set scrolling region)
     # - ESC [ ... ; ... r (set scrolling region)
     # - ESC [ ... ; ... ; ... m (color codes)
-    # - ESC ] ... BEL (OSC sequences)
+    # - ESC ] ... BEL or ESC \ (OSC sequences - color palettes, window titles, etc.)
     # - ESC [ ... ; ... ; ... ; ... ; ... m (extended color codes)
     # - ESC [ ... ; ... ; ... ; ... ; ... ; ... m (more extended codes)
     # - ESC [ ... ; ... ; ... ; ... ; ... ; ... ; ... m (even more)
     # - ESC [ ... ; ... ; ... ; ... ; ... ; ... ; ... ; ... m (RGB color codes)
     
-    # Pattern to match ANSI escape sequences
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    # Pattern to match ANSI escape sequences:
+    # 1. CSI sequences: ESC [ ... (terminated by @-~)
+    # 2. OSC sequences: ESC ] ... (terminated by BEL \x07 or ESC \)
+    # 3. Single character commands: ESC [@-Z\\-_]
+    ansi_escape = re.compile(
+        r'\x1B(?:'
+        r'\[[0-?]*[ -/]*[@-~]'  # CSI sequences
+        r'|]'                    # OSC start
+        r'[^\x07\x1B]*'          # OSC content (anything except BEL or ESC)
+        r'(?:\x07|\x1B\\)'       # OSC terminator (BEL or ESC\)
+        r'|[@-Z\\-_]'            # Single character commands
+        r')'
+    )
     return ansi_escape.sub('', text)
 
 
@@ -88,10 +99,18 @@ def _format_output_html(text: str) -> str:
     if not text:
         return '<span class="empty-output">(empty)</span>'
     
+    # Strip OSC sequences (like color palette settings) as ansi2html doesn't handle them well
+    # and they're not useful in HTML output
+    text_without_osc = re.sub(
+        r'\x1B][^\x07\x1B]*(?:\x07|\x1B\\)',
+        '',
+        text
+    )
+    
     # Convert ANSI codes to HTML using ansi2html
     # inline=True uses inline styles, full=False returns just the body content
     conv = Ansi2HTMLConverter(inline=True, dark_bg=False)
-    html_output = conv.convert(text, full=False)
+    html_output = conv.convert(text_without_osc, full=False)
     
     # ansi2html may wrap content in <pre> or <span> tags
     # We want to ensure it's properly formatted for our output-box div
