@@ -100,9 +100,9 @@ def _execute_command(cfg: AppConfig, command: str, shell: str) -> None:
             except Exception as e:
                 print(f"Failed to send email: {e}", file=sys.stderr)
         
-        if exit_code != 0:
-            print(
-                f"Command exited with non-zero status: {exit_code}",
-                file=sys.stderr
-            )
+        # if exit_code != 0:
+        #     print(
+        #         f"Command exited with non-zero status: {exit_code}",
+        #         file=sys.stderr
+        #     )
 
